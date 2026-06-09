@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Summer 2026 — Schedule</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #222535;
+    --border: rgba(255,255,255,.07);
+    --text: #f0f0f5;
+    --muted: #7b7f96;
+    --accent: #6366f1;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    position: sticky; top: 0; z-index: 200;
+    background: rgba(15,17,23,.88);
+    backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px; height: 60px;
+  }
+  .topbar-left { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    width: 32px; height: 32px; border-radius: 8px;
+    background: linear-gradient(135deg, #6366f1, #ec4899);
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .topbar-title { font-size: .95rem; font-weight: 600; letter-spacing: -.01em; }
+  .topbar-sub { font-size: .75rem; color: var(--muted); margin-left: 4px; }
+
+  .week-nav { display: flex; align-items: center; gap: 10px; }
+  .nav-btn {
+    background: var(--surface2); border: 1px solid var(--border);
+    color: var(--text); border-radius: 8px; padding: 6px 14px;
+    font-size: .82rem; cursor: pointer; transition: all .15s;
+  }
+  .nav-btn:hover:not(:disabled) { background: var(--surface); border-color: var(--accent); color: var(--accent); }
+  .nav-btn:disabled { opacity: .3; cursor: not-allowed; }
+  .week-pill {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; padding: 5px 16px;
+    font-size: .82rem; font-weight: 500; min-width: 195px; text-align: center;
+  }
+
+  /* HERO */
+  .hero {
+    padding: 40px 32px 24px;
+    display: grid; grid-template-columns: 1fr auto; gap: 24px; align-items: start;
+  }
+  .hero-greeting { font-size: 2rem; font-weight: 700; letter-spacing: -.03em; line-height: 1.1; }
+  .hero-greeting span {
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .hero-sub { color: var(--muted); font-size: .9rem; margin-top: 6px; }
+
+  .week-progress-box {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 14px; padding: 16px 20px; min-width: 220px;
+  }
+  .week-progress-box .label { font-size: .75rem; color: var(--muted); margin-bottom: 8px; }
+  .week-dots { display: flex; gap: 6px; margin-bottom: 10px; }
+  .week-dot { flex: 1; height: 6px; border-radius: 99px; background: var(--surface2); transition: background .3s; }
+  .week-dot.done { background: var(--accent); }
+  .week-dot.current { background: linear-gradient(90deg, var(--accent), #ec4899); }
+  .week-pct { font-size: 1.3rem; font-weight: 700; }
+  .week-pct-sub { font-size: .72rem; color: var(--muted); }
+
+  /* WEEK COMPLETION BAR */
+  .week-completion-bar {
+    margin: 0 32px 20px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px 18px;
+    display: flex; align-items: center; gap: 16px;
+  }
+  .wc-label { font-size: .8rem; color: var(--muted); white-space: nowrap; }
+  .wc-track { flex: 1; background: var(--surface2); border-radius: 99px; height: 8px; }
+  .wc-fill {
+    height: 8px; border-radius: 99px;
+    background: linear-gradient(90deg, #6366f1, #ec4899);
+    transition: width .4s ease;
+  }
+  .wc-pct { font-size: .85rem; font-weight: 700; white-space: nowrap; min-width: 36px; text-align: right; }
+  .wc-count { font-size: .75rem; color: var(--muted); white-space: nowrap; }
+
+  /* MAIN */
+  .main { display: grid; grid-template-columns: 1fr 280px; gap: 20px; padding: 0 32px 32px; }
+
+  /* CALENDAR CARD */
+  .cal-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 16px; overflow: hidden;
+  }
+  .cal-header { display: grid; grid-template-columns: 56px repeat(7, 1fr); border-bottom: 1px solid var(--border); }
+  .cal-header-cell {
+    padding: 14px 6px; text-align: center;
+    font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted);
+  }
+  .cal-header-cell.today { color: var(--accent); }
+  .cal-header-cell .date-num {
+    display: block; font-size: 1rem; font-weight: 700;
+    letter-spacing: 0; text-transform: none; margin-top: 2px; color: var(--text);
+  }
+  .cal-header-cell.today .date-num {
+    background: var(--accent); color: #fff;
+    width: 28px; height: 28px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 2px auto 0;
+  }
+
+  .cal-body { overflow-y: auto; max-height: 580px; }
+  .cal-row {
+    display: grid; grid-template-columns: 56px repeat(7, 1fr);
+    border-bottom: 1px solid var(--border); min-height: 56px;
+  }
+  .cal-row:last-child { border-bottom: none; }
+  .time-col {
+    padding: 8px 8px 0 0; text-align: right;
+    font-size: .68rem; color: var(--muted);
+    border-right: 1px solid var(--border);
+    font-variant-numeric: tabular-nums;
+  }
+  .day-col {
+    position: relative; border-right: 1px solid var(--border); min-height: 56px;
+  }
+  .day-col:last-child { border-right: none; }
+  .day-col.today { background: rgba(99,102,241,.04); }
+
+  /* EVENT BLOCK */
+  .event {
+    position: absolute; left: 3px; right: 3px;
+    border-radius: 6px; padding: 4px 6px;
+    font-size: .68rem; font-weight: 600; line-height: 1.3; color: #fff;
+    z-index: 2; overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    cursor: pointer; user-select: none;
+    transition: transform .12s, box-shadow .12s, opacity .2s;
+  }
+  .event:hover { transform: scale(1.03); box-shadow: 0 4px 16px rgba(0,0,0,.5); z-index: 10; }
+  .event:active { transform: scale(.98); }
+  .event .ev-time { opacity: .75; font-size: .6rem; font-weight: 400; display: block; }
+  .event .ev-check { float: right; font-size: .8rem; margin-left: 4px; }
+
+  /* Vacation day overlay */
+  .vacation-overlay {
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(255,255,255,.02) 0px,
+      rgba(255,255,255,.02) 4px,
+      transparent 4px,
+      transparent 10px
+    );
+    border-left: 2px solid rgba(251,191,36,.25);
+    z-index: 5; pointer-events: none;
+  }
+  .day-col.vacation { background: rgba(251,191,36,.04); }
+  .vacation-label {
+    position: sticky; top: 4px; z-index: 6;
+    text-align: center; font-size: .62rem; font-weight: 700;
+    color: #fbbf24; letter-spacing: .06em; text-transform: uppercase;
+    padding: 3px 0; pointer-events: none;
+  }
+  .cal-header-cell.vacation-day { color: #fbbf24 !important; opacity: .6; }
+
+  /* Done state */
+  .event.done {
+    opacity: .38;
+    filter: grayscale(.5);
+    transform: none !important;
+  }
+  .event.done::after {
+    content: '✓';
+    position: absolute; top: 3px; right: 5px;
+    font-size: .75rem; font-weight: 700; opacity: 1;
+  }
+
+  .ev-internship { background: linear-gradient(135deg, #6366f1, #818cf8); }
+  .ev-created    { background: linear-gradient(135deg, #10b981, #34d399); }
+  .ev-sat        { background: linear-gradient(135deg, #f59e0b, #fbbf24); }
+  .ev-precalc    { background: linear-gradient(135deg, #a855f7, #c084fc); }
+  .ev-cs         { background: linear-gradient(135deg, #3b82f6, #60a5fa); }
+  .ev-claude     { background: linear-gradient(135deg, #ec4899, #f472b6); }
+  .ev-article    { background: linear-gradient(135deg, #475569, #64748b); }
+
+  /* SIDEBAR */
+  .sidebar { display: flex; flex-direction: column; gap: 16px; }
+  .sidebar-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 20px;
+  }
+  .sidebar-card h3 {
+    font-size: .75rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin-bottom: 14px; font-weight: 600;
+  }
+
+  .activity-list { display: flex; flex-direction: column; gap: 10px; }
+  .activity-row { display: flex; align-items: center; gap: 10px; }
+  .activity-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .activity-name { font-size: .82rem; flex: 1; }
+  .activity-hrs {
+    font-size: .78rem; font-weight: 600; color: var(--muted);
+    background: var(--surface2); border-radius: 6px; padding: 2px 8px;
+  }
+  .activity-bar-bg { width: 100%; height: 3px; background: var(--surface2); border-radius: 99px; margin-top: 3px; }
+  .activity-bar-fill { height: 3px; border-radius: 99px; }
+
+  .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat-box { background: var(--surface2); border-radius: 10px; padding: 12px; text-align: center; }
+  .stat-num { font-size: 1.4rem; font-weight: 700; }
+  .stat-label { font-size: .68rem; color: var(--muted); margin-top: 2px; }
+
+  .legend-grid { display: flex; flex-direction: column; gap: 8px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: .8rem; }
+  .legend-swatch { width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; }
+
+  /* Checklist panel */
+  .checklist { display: flex; flex-direction: column; gap: 6px; }
+  .check-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; cursor: pointer;
+    background: var(--surface2); border: 1px solid var(--border);
+    transition: background .15s, border-color .15s;
+    font-size: .8rem;
+  }
+  .check-row:hover { border-color: rgba(255,255,255,.15); }
+  .check-row.checked { opacity: .45; }
+  .check-box {
+    width: 16px; height: 16px; border-radius: 4px; flex-shrink: 0;
+    border: 2px solid rgba(255,255,255,.25);
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; transition: all .15s;
+  }
+  .check-row.checked .check-box { border-color: #10b981; background: #10b981; }
+  .check-label { flex: 1; }
+  .check-row.checked .check-label { text-decoration: line-through; }
+
+  .hint { font-size: .7rem; color: var(--muted); margin-top: 8px; text-align: center; }
+
+  /* SCROLLBAR */
+  .cal-body::-webkit-scrollbar { width: 6px; }
+  .cal-body::-webkit-scrollbar-track { background: transparent; }
+  .cal-body::-webkit-scrollbar-thumb { background: var(--surface2); border-radius: 99px; }
+
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .hero { grid-template-columns: 1fr; }
+    .week-progress-box { display: none; }
+    .topbar, .hero, .main, .week-completion-bar { padding-left: 16px; padding-right: 16px; }
+    .week-completion-bar { margin-left: 16px; margin-right: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <div class="logo">☀️</div>
+    <span class="topbar-title">Summer 2026</span>
+    <span class="topbar-sub">High School Prep</span>
+  </div>
+  <div class="week-nav">
+    <button class="nav-btn" id="prev-btn" onclick="changeWeek(-1)">← Prev</button>
+    <div class="week-pill" id="week-label"></div>
+    <button class="nav-btn" id="next-btn" onclick="changeWeek(1)">Next →</button>
+  </div>
+</div>
+
+<div class="hero">
+  <div>
+    <div class="hero-greeting">Your <span>Summer Plan</span></div>
+    <div class="hero-sub">Jun 9 – Aug 11 · 9 weeks · ~27.5 hrs/week</div>
+  </div>
+  <div class="week-progress-box">
+    <div class="label">Summer Progress</div>
+    <div class="week-dots" id="week-dots"></div>
+    <div class="week-pct" id="week-pct">0%</div>
+    <div class="week-pct-sub" id="week-pct-sub"></div>
+  </div>
+</div>
+
+<div class="week-completion-bar">
+  <span class="wc-label">This week</span>
+  <div class="wc-track"><div class="wc-fill" id="wc-fill" style="width:0%"></div></div>
+  <span class="wc-pct" id="wc-pct">0%</span>
+  <span class="wc-count" id="wc-count">0 / 0 done</span>
+</div>
+
+<div class="main">
+
+  <div class="cal-card">
+    <div class="cal-header" id="cal-header"><div class="cal-header-cell"></div></div>
+    <div class="cal-body" id="cal-body"></div>
+  </div>
+
+  <div class="sidebar">
+
+    <div class="sidebar-card">
+      <h3>Summer Stats</h3>
+      <div class="stat-grid">
+        <div class="stat-box"><div class="stat-num" style="color:#6366f1">9</div><div class="stat-label">Weeks Total</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#10b981">27.5</div><div class="stat-label">Hrs / Week</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#f59e0b">248</div><div class="stat-label">Total Hours</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:#ec4899">7</div><div class="stat-label">Activities</div></div>
+      </div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3>Week Checklist</h3>
+      <div class="checklist" id="checklist"></div>
+      <div class="hint">Click events on calendar or items here to check off</div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3>Weekly Breakdown</h3>
+      <div class="activity-list" id="activity-list"></div>
+    </div>
+
+    <div class="sidebar-card">
+      <h3>Color Legend</h3>
+      <div class="legend-grid" id="legend-grid"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const START_DATE = new Date('2026-06-09');
+const TOTAL_WEEKS = 9;
+const DAYS = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const DISPLAY_START = 9;
+const DISPLAY_END   = 21;
+const PX_PER_HOUR   = 56;
+
+const ACTIVITIES = [
+  { key:'internship', label:'Internship',        color:'#6366f1', cls:'ev-internship', hrsWeek:5   },
+  { key:'created',    label:'Creative (Created)', color:'#10b981', cls:'ev-created',   hrsWeek:6   },
+  { key:'sat',        label:'SAT Prep',           color:'#f59e0b', cls:'ev-sat',        hrsWeek:6   },
+  { key:'precalc',    label:'Pre-Calc',            color:'#a855f7', cls:'ev-precalc',   hrsWeek:3   },
+  { key:'cs',         label:'CS + Tutor',          color:'#3b82f6', cls:'ev-cs',        hrsWeek:4   },
+  { key:'claude',     label:'Claude Code',         color:'#ec4899', cls:'ev-claude',    hrsWeek:3   },
+  { key:'article',    label:'Daily Article',       color:'#64748b', cls:'ev-article',   hrsWeek:0.5 },
+];
+const ACT_MAP = Object.fromEntries(ACTIVITIES.map(a => [a.key, a]));
+
+// Events: day 0=Mon…6=Sun
+const EVENTS = [
+  // Internship — 5 hrs/week, starts at 10:30am (after waking at 9, getting ready)
+  { id:'int-mon', key:'internship', day:0, startH:10.5, dur:2,   title:'Internship' },
+  { id:'int-wed', key:'internship', day:2, startH:10.5, dur:2,   title:'Internship' },
+  { id:'int-fri', key:'internship', day:4, startH:10.5, dur:1,   title:'Internship' },
+
+  // SAT — Tue & Thu lecture, Sat & Sun HW
+  { id:'sat-tue', key:'sat', day:1, startH:14, dur:2, title:'SAT Lecture' },
+  { id:'sat-thu', key:'sat', day:3, startH:14, dur:2, title:'SAT Lecture' },
+  { id:'sat-sat', key:'sat', day:5, startH:10, dur:1, title:'SAT Homework' },
+  { id:'sat-sun', key:'sat', day:6, startH:10, dur:1, title:'SAT Homework' },
+
+  // Pre-Calc — Mon & Wed
+  { id:'pc-mon', key:'precalc', day:0, startH:14,   dur:1.5, title:'Pre-Calc' },
+  { id:'pc-wed', key:'precalc', day:2, startH:14,   dur:1.5, title:'Pre-Calc' },
+
+  // CS + Tutor — Wed class, Sat HW
+  { id:'cs-wed', key:'cs', day:2, startH:16, dur:2, title:'CS + Tutor' },
+  { id:'cs-sat', key:'cs', day:5, startH:14, dur:2, title:'CS Homework' },
+
+  // Claude Code — Fri + Sat
+  { id:'cc-fri', key:'claude', day:4, startH:14,   dur:1.5, title:'Claude Code' },
+  { id:'cc-sat', key:'claude', day:5, startH:17,   dur:1.5, title:'Claude Code' },
+
+  // Created — Sat & Sun
+  { id:'cr-sat', key:'created', day:5, startH:11, dur:3, title:'Created' },
+  { id:'cr-sun', key:'created', day:6, startH:11, dur:3, title:'Created' },
+
+  // Article — Mon–Sat at 9:30am (after waking up)
+  ...[0,1,2,3,4,5].map(d => ({
+    id: `art-${d}`, key:'article', day:d, startH:9.5, dur:0.15, title:'📰 Article'
+  })),
+];
+
+// ── State (persisted via localStorage) ──
+function stateKey(week) { return `summer2026_w${week}`; }
+function loadState(week) {
+  try { return JSON.parse(localStorage.getItem(stateKey(week)) || '{}'); } catch { return {}; }
+}
+function saveState(week, state) {
+  localStorage.setItem(stateKey(week), JSON.stringify(state));
+}
+function isDone(week, evId) { return !!loadState(week)[evId]; }
+function toggleDone(week, evId) {
+  const s = loadState(week);
+  s[evId] = !s[evId];
+  saveState(week, s);
+}
+
+// Vacation: Jul 27 – Aug 2 (inclusive)
+const VACATION_START = new Date('2026-07-27');
+const VACATION_END   = new Date('2026-08-02');
+function isVacationDate(d) { return d >= VACATION_START && d <= VACATION_END; }
+
+let currentWeek = 0;
+
+function weekStart(w) {
+  const d = new Date(START_DATE); d.setDate(d.getDate() + w * 7); return d;
+}
+function fmt(d, opts={month:'short',day:'numeric'}) {
+  return d.toLocaleDateString('en-US', opts);
+}
+function todayInfo() {
+  const t = new Date();
+  for (let w = 0; w < TOTAL_WEEKS; w++) {
+    const ws = weekStart(w), we = new Date(ws); we.setDate(we.getDate() + 6);
+    if (t >= ws && t <= we) { const day = t.getDay(); return { week:w, dayIdx: day===0?6:day-1 }; }
+  }
+  return { week:-1, dayIdx:-1 };
+}
+function formatTime(h) {
+  const hh = Math.floor(h), mm = Math.round((h % 1) * 60);
+  const label = hh < 12 ? 'am' : 'pm';
+  const h12 = hh === 0 ? 12 : hh > 12 ? hh - 12 : hh;
+  return mm ? `${h12}:${String(mm).padStart(2,'0')}${label}` : `${h12}${label}`;
+}
+
+function changeWeek(dir) {
+  currentWeek = Math.max(0, Math.min(TOTAL_WEEKS-1, currentWeek + dir));
+  render();
+}
+
+function getWeekEvents() {
+  // Return unique checklist items (one per activity per day grouping)
+  return EVENTS.filter(e => e.key !== 'article' || e.day === 0)
+    .concat(EVENTS.filter(e => e.key === 'article').slice(0,1))
+    .filter((e,i,a) => a.findIndex(x=>x.id===e.id)===i);
+  // Actually just return all events for checklist
+  return EVENTS;
+}
+
+function renderCompletionBar() {
+  const state = loadState(currentWeek);
+  const total = EVENTS.length;
+  const done  = EVENTS.filter(e => state[e.id]).length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  document.getElementById('wc-fill').style.width  = pct + '%';
+  document.getElementById('wc-pct').textContent   = pct + '%';
+  document.getElementById('wc-count').textContent = `${done} / ${total} done`;
+}
+
+function renderChecklist() {
+  const state = loadState(currentWeek);
+  // Group by activity key for a compact checklist
+  const byDay = EVENTS.map(e => ({...e, done: !!state[e.id]}));
+  const cl = document.getElementById('checklist');
+  cl.innerHTML = byDay.map(e => {
+    const act = ACT_MAP[e.key];
+    const dayName = DAYS[e.day];
+    return `
+      <div class="check-row${e.done?' checked':''}" onclick="handleCheck('${e.id}')">
+        <div class="check-box">${e.done?'✓':''}</div>
+        <div class="check-label">
+          <span style="font-size:.7rem;color:${act.color};font-weight:600">${act.label}</span>
+          <span style="color:var(--muted);margin-left:6px;font-size:.72rem">${dayName} · ${formatTime(e.startH)}</span>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function handleCheck(evId) {
+  toggleDone(currentWeek, evId);
+  renderCompletionBar();
+  renderChecklist();
+  // Re-render just the event blocks without full re-render
+  document.querySelectorAll(`.event[data-id="${evId}"]`).forEach(el => {
+    const done = isDone(currentWeek, evId);
+    el.classList.toggle('done', done);
+  });
+}
+
+function renderSidebar() {
+  const maxH = Math.max(...ACTIVITIES.map(a => a.hrsWeek));
+  document.getElementById('activity-list').innerHTML = ACTIVITIES.map(a => `
+    <div>
+      <div class="activity-row">
+        <div class="activity-dot" style="background:${a.color}"></div>
+        <span class="activity-name">${a.label}</span>
+        <span class="activity-hrs">${a.hrsWeek}h</span>
+      </div>
+      <div class="activity-bar-bg">
+        <div class="activity-bar-fill" style="width:${(a.hrsWeek/maxH*100).toFixed(0)}%;background:${a.color}"></div>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('legend-grid').innerHTML = ACTIVITIES.map(a => `
+    <div class="legend-row">
+      <div class="legend-swatch" style="background:${a.color}"></div>${a.label}
+    </div>`).join('');
+}
+
+function render() {
+  const { week: todayWeek, dayIdx: todayDay } = todayInfo();
+  const isCW = currentWeek === todayWeek;
+  const ws = weekStart(currentWeek), we = new Date(ws); we.setDate(we.getDate() + 6);
+
+  document.getElementById('week-label').textContent = `Week ${currentWeek+1} of ${TOTAL_WEEKS} · ${fmt(ws)} – ${fmt(we)}`;
+  document.getElementById('prev-btn').disabled = currentWeek === 0;
+  document.getElementById('next-btn').disabled = currentWeek === TOTAL_WEEKS-1;
+
+  // Hero dots
+  document.getElementById('week-dots').innerHTML = Array.from({length:TOTAL_WEEKS}, (_,i) => {
+    let cls = 'week-dot';
+    if (todayWeek > i || (i < currentWeek && i < todayWeek)) cls += ' done';
+    if (i === currentWeek) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+  const heroPct = Math.round((currentWeek / TOTAL_WEEKS) * 100);
+  document.getElementById('week-pct').textContent = heroPct + '%';
+  document.getElementById('week-pct-sub').textContent = `${TOTAL_WEEKS - currentWeek} weeks remaining`;
+
+  // Calendar header
+  document.getElementById('cal-header').innerHTML = '<div class="cal-header-cell"></div>' +
+    DAYS.map((d,i) => {
+      const dd = new Date(ws); dd.setDate(dd.getDate()+i);
+      const isToday = isCW && i===todayDay;
+      const isVac = isVacationDate(dd);
+      const numEl = isToday
+        ? `<div class="date-num">${dd.getDate()}</div>`
+        : `<span class="date-num">${dd.getDate()}</span>`;
+      return `<div class="cal-header-cell${isToday?' today':''}${isVac?' vacation-day':''}">${d}${numEl}${isVac?'<span style="display:block;font-size:.58rem;color:#fbbf24;margin-top:1px">✈ away</span>':''}</div>`;
+    }).join('');
+
+  // Calendar body
+  const body = document.getElementById('cal-body');
+  body.innerHTML = '';
+
+  for (let h = DISPLAY_START; h < DISPLAY_END; h++) {
+    const row = document.createElement('div');
+    row.className = 'cal-row';
+    row.style.height = PX_PER_HOUR + 'px';
+
+    const tc = document.createElement('div');
+    tc.className = 'time-col';
+    tc.textContent = formatTime(h);
+    row.appendChild(tc);
+
+    for (let d = 0; d < 7; d++) {
+      const dayDate = new Date(ws); dayDate.setDate(dayDate.getDate() + d);
+      const isVac = isVacationDate(dayDate);
+
+      const cell = document.createElement('div');
+      cell.className = 'day-col' + (isCW && d===todayDay ? ' today' : '') + (isVac ? ' vacation' : '');
+
+      if (isVac) {
+        // Vacation overlay — no events, just a striped bg + label on first hour row
+        if (h === DISPLAY_START) {
+          const lbl = document.createElement('div');
+          lbl.className = 'vacation-label';
+          lbl.textContent = '✈ Away';
+          cell.appendChild(lbl);
+        }
+        const overlay = document.createElement('div');
+        overlay.className = 'vacation-overlay';
+        cell.appendChild(overlay);
+      } else {
+        EVENTS.forEach(ev => {
+          if (ev.day !== d) return;
+          if (Math.floor(ev.startH) !== h) return;
+
+          const act = ACT_MAP[ev.key];
+          const done = isDone(currentWeek, ev.id);
+          const el = document.createElement('div');
+          el.className = 'event ' + act.cls + (done ? ' done' : '');
+          el.dataset.id = ev.id;
+
+          const offsetPx = (ev.startH - h) * PX_PER_HOUR;
+          const heightPx = Math.max(ev.dur * PX_PER_HOUR - 4, 18);
+          el.style.cssText = `top:${offsetPx}px;height:${heightPx}px;`;
+
+          const endH = ev.startH + ev.dur;
+          el.innerHTML = heightPx > 28
+            ? `${ev.title}<span class="ev-time">${formatTime(ev.startH)} – ${formatTime(endH)}</span>`
+            : ev.title;
+
+          el.addEventListener('click', () => handleCheck(ev.id));
+          cell.appendChild(el);
+        });
+      }
+
+      row.appendChild(cell);
+    }
+    body.appendChild(row);
+  }
+
+  renderCompletionBar();
+  renderChecklist();
+}
+
+// Init
+(function() {
+  const { week } = todayInfo();
+  currentWeek = week >= 0 ? week : 0;
+  renderSidebar();
+  render();
+  // Scroll to 9am
+  const body = document.getElementById('cal-body');
+  body.scrollTop = 0;
+})();
+</script>
+</body>
+</html>
